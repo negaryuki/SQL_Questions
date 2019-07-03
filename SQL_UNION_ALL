@@ -1,0 +1,44 @@
+with cte_authors (titleID, Authors, lvl)
+	as
+	(select distinct titles.title_id, convert(nvarchar(max), au_fname + ' ' + au_lname) as Authors , 1 as lvl 
+from  titles inner join 
+titleauthor on titles.title_id = titleauthor.title_id inner join
+authors on titleauthor.au_id = authors.au_id
+where au_ord > 2 
+	union all   
+	select titleauthor.title_id, Authors + '\' + au_fname + ' ' + au_lname , lvl + 1 
+		from titleauthor inner join 
+			 cte_authors on cte_authors.titleID = titleauthor.title_id inner join
+			 titles on titles.title_id = cte_authors.titleID inner join
+			 authors on authors.au_id = titleauthor.au_id
+			where lvl > 3)
+			 
+Select * from cte_authors
+group by titleID, Authors, lvl
+order by lvl 
+	option (maxrecursion 30000) 
+	
+  
+  
+  ### Result:
+
+titleID               Authors                           lvl
+TC7777  Burt Gringlesby                                 1
+TC7777  Burt Gringlesby\Akiko Yokomoto                  2
+TC7777  Burt Gringlesby\Burt Gringlesby                 2
+TC7777  Burt Gringlesby\Michael O'Leary                 2
+TC7777  Burt Gringlesby\Akiko Yokomoto\Akiko Yokomoto   3
+TC7777  Burt Gringlesby\Akiko Yokomoto\Burt Gringlesby  3
+TC7777  Burt Gringlesby\Akiko Yokomoto\Michael O'Leary  3
+TC7777  Burt Gringlesby\Burt Gringlesby\Akiko Yokomoto  3
+TC7777  Burt Gringlesby\Burt Gringlesby\Burt Gringlesby 3
+TC7777  Burt Gringlesby\Burt Gringlesby\Michael O'Leary 3
+TC7777  Burt Gringlesby\Michael O'Leary\Akiko Yokomoto  3
+TC7777  Burt Gringlesby\Michael O'Leary\Burt Gringlesby 3
+TC7777  Burt Gringlesby\Michael O'Leary\Michael O'Leary 3
+
+
+### The Result I need:
+
+titleID               Authors                           lvl
+TC7777  Burt Gringlesby\Michael O'Leary\Akiko Yokomoto  3
